@@ -54,8 +54,6 @@ void Stack::clear() {
 float Stack::getNumberFromObject(Object* obj) {
     if(obj->type == t_type_number)
         return *(float*)(obj->value);
-    else if(obj->type == t_type_bool)
-        return (bool)*(int*)(obj->value);
     else
         return INT_MIN; // error
 }
@@ -71,14 +69,14 @@ void Stack::addVariable(std::string identifier, Object* object) {
     variables[identifier] = object;
 }
 
-int* Stack::addInt(int toAdd) {
-    ints.push_back(toAdd);
-    return &ints.back();
-}
-
 float* Stack::addFloat(float toAdd) {
     floats.push_back(toAdd);
     return &floats.back();
+}
+
+std::string* Stack::addString(std::string toAdd) {
+    strings.push_back(toAdd);
+    return &strings.back();
 }
 
 Object* Stack::addObject(Object* toAdd) {

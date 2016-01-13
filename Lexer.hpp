@@ -40,14 +40,23 @@ enum Token {
     t_type_string,
     t_type_function,
     
+    /* Keywords */
+    
+    t_k_if = 200,
+    t_k_then,
+    t_k_end,
+    
     /* Macros */
     
-    t_macro = 200,
+    t_macro = 300,
     
     /* Operators */
     
-    t_forw_slash    = 300,
+    t_forw_slash    = 400,
     t_back_slash,
+    
+    t_quote,
+    t_single_quote,
     
     t_colon,
     t_semicolon,
@@ -67,6 +76,7 @@ enum Token {
     t_minus,
     t_asterix,
     t_modulo,
+    t_raised,
     
     t_add_assign,
     t_sub_assign,

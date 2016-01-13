@@ -23,8 +23,8 @@ public:
     Stack();
     ~Stack();
     
-    int* addInt(int toAdd);
     float* addFloat(float toAdd);
+    std::string* addString(std::string toAdd);
     Object* addObject(Object* object);
     
     void push(Object* obj);
@@ -46,8 +46,8 @@ private:
     std::map<std::string, Object*> variables;
     std::vector<Object*> stack;
     
-    std::list<int> ints;
     std::list<float> floats;
+    std::list<std::string> strings;
     std::list<Object*> objects;
     
 };

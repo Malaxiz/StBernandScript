@@ -15,7 +15,11 @@
 Lexer::Lexer() {
     
     keywords = {
-        {"function", t_keyword_function},
+        {"function",    t_keyword_function},
+        {"if",          t_k_if},
+        {"then",        t_k_then},
+        {"end",         t_k_end},
+//        {"null",        t_null},
     };
     
     operators = {
@@ -30,6 +34,8 @@ Lexer::Lexer() {
         {"/",       t_forw_slash},
         {"\\",      t_back_slash},
         {"*",       t_asterix},
+        {"%",       t_modulo},
+        {"**",      t_raised},
         
         {"+=",      t_add_assign},
         {"-=",      t_sub_assign},
