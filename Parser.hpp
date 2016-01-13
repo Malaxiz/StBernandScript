@@ -66,6 +66,8 @@ private:
         return std::find(vec.begin(), vec.end(), val) != vec.end();
     }
     
+    std::vector<std::pair<std::string, Token>>::iterator getMatchedParenthesis(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec);
+    
     std::vector<Token> expected;
     std::vector<Token> getOperatorTokens();
     
@@ -110,6 +112,8 @@ private:
     std::string removeUntil(std::string input, char until);
     
     int getPriorityLevel(Token token, std::map<int, std::vector<Token>> order);
+    
+    std::string parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle = true);
     
 };
 

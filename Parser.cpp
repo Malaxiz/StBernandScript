@@ -68,10 +68,24 @@ std::vector<std::pair<std::string, Token>> Parser::shuffle(std::vector<std::pair
             case t_less_than:
             case t_less_than_or_equal:
             case t_greater_than_or_equal:
+            {
+                if(next == t_parenthesis_open) {
+                    auto endParenthesis = getMatchedParenthesis(&it, &tokens);
+                    auto temp = *it;
+                    tokens.erase(it, it + 1);
+                    tokens.insert(endParenthesis - 2, temp);
+                    break;
+                    
+                }
+            }
+                
             case t_dot:
+            {
                 if(next == t_number || next == t_identifier) {
                     std::iter_swap(it, it+1);
                 }
+            }
+                break;
                 
 //            {
 //                int prio = getPriorityLevel(it->second, order);
@@ -87,7 +101,6 @@ std::vector<std::pair<std::string, Token>> Parser::shuffle(std::vector<std::pair
 //                    
 //                }
 //            }
-                break;
             
             case t_equals:
                 std::rotate(it, it + 1, tokens.end() - 1);
@@ -185,6 +198,7 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
             case t_parenthesis_close:
                 parenthesisLevel -= 1;
                 addExpected(getOperatorTokens());
+                addExpected({t_parenthesis_close});
                 break;
                 
             case t_plus:
@@ -368,6 +382,17 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
     return toReturn;
 }
 
+std::string Parser::parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle /* = true */ ) {
+    
+    auto copy = *tokens;
+    
+    copy.erase(*stop, copy.end());
+    copy.erase(copy.begin(), *start);
+    
+    parse(copy, stack);
+    return "";
+}
+
 int Parser::doMathOperation(std::pair<std::string, Token> op, Stack* stack) {
     if(stack->size() < 2)
         return -1;
@@ -456,6 +481,26 @@ int Parser::doMathOperation(std::pair<std::string, Token> op, Stack* stack) {
 
 std::vector<Token> Parser::getOperatorTokens() {
     return {t_plus, t_minus, t_asterix, t_forw_slash, t_modulo, t_equal_to, t_less_than, t_greater_than, t_less_than_or_equal, t_greater_than_or_equal, t_not_equal_to};
+}
+
+std::vector<std::pair<std::string, Token>>::iterator Parser::getMatchedParenthesis(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec) {
+    
+    int parenthesisLevel = 1;
+    
+    auto it = *position;
+    while(it != vec->end()) {
+        if(it->second == t_parenthesis_close)
+            parenthesisLevel--;
+        else if(it->second == t_parenthesis_open)
+            parenthesisLevel++;
+        
+        if(parenthesisLevel == 0)
+            return it;
+        
+        it++;
+    }
+    
+    return vec->end();
 }
 
 std::string Parser::removeTrailingZeros(std::string input) {
