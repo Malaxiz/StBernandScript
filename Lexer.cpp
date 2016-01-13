@@ -15,6 +15,7 @@
 Lexer::Lexer() {
     
     keywords = {
+        {"function", t_keyword_function},
     };
     
     operators = {
@@ -37,6 +38,9 @@ Lexer::Lexer() {
         
         {"(",       t_parenthesis_open},
         {")",       t_parenthesis_close},
+        
+        {"++",      t_increment},
+        {"--",      t_decrement},
     
         {"!",       t_not},
         {"==",      t_equal_to},
@@ -45,6 +49,12 @@ Lexer::Lexer() {
         {">",       t_greater_than},
         {"<=",      t_less_than_or_equal},
         {">=",      t_greater_than_or_equal},
+    };
+    
+    types = {
+        {"t_identifier",  t_identifier},
+        {"t_number",      t_number},
+        {"t_object",      t_object}
     };
     
 }
@@ -212,4 +222,20 @@ void Lexer::printTokens(std::vector<std::pair<std::string, Token>> tokens, int s
         std::cout << "| " << i.second << "\n";
     }
     std::cout << "== Ended printing tokens ==\n\n";
+}
+
+std::string Lexer::getStringFromToken(Token token) {
+    std::string r = "";
+    for(auto& i: keywords)
+        if(i.second == token)
+            r = i.first;
+    for(auto& i: types)
+        if(i.second == token)
+            r = i.first;
+    for(auto& i: operators)
+        if(i.second == token)
+            r = i.first;
+    if(r != "")
+        r = "[" + r + "]";
+    return r;
 }

@@ -30,11 +30,15 @@ enum Token {
     t_number,
     t_object,
     
+    t_keyword_function,
+    t_call,
+    
     /* Types */
     
     t_type_number   = 100,
     t_type_bool,
     t_type_string,
+    t_type_function,
     
     /* Macros */
     
@@ -70,6 +74,9 @@ enum Token {
     t_mult_assign,
     t_mod_assign,
     
+    t_increment,
+    t_decrement,
+    
     t_not,
     t_equal_to,
     t_not_equal_to,
@@ -96,6 +103,8 @@ public:
     void printTokens(std::map<std::string, Token> tokens, int space = 4);
     void printTokens(std::vector<std::pair<std::string, Token>> tokens, int space = 4);
     
+    std::string getStringFromToken(Token token);
+    
 private:
     std::string scan(std::string input);
     std::vector<std::pair<std::string, Token>> sort(std::map<std::string, Token> tokens);
@@ -114,6 +123,7 @@ private:
     
     std::map<std::string, Token> keywords;
     std::map<std::string, Token> operators;
+    std::map<std::string, Token> types;
     
 };
 

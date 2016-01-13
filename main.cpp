@@ -29,7 +29,7 @@ int main(int argc, const char * argv[]) {
     Parser parser;
     Stack stack;
     
-    Options::_Options = Options::Option::PrintErrPosition; // Default options
+    Options::_Options = (Options::Option)((int)Options::Option::PrintErrPosition | (int)Options::Option::PrintExpected); // Default options
     
     while(true) {
         std::string input = "";

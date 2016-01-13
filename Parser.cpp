@@ -110,21 +110,42 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
     
     int parenthesisLevel = 0;
     
+    std::vector<std::pair<std::string, Token>>::iterator lastParenthesis = tokens.end();
+    
     auto it = tokens.begin();
     while(it != tokens.end()) {
         if(parenthesisLevel == 0) {
             addExpected({t_end});
         }
         
+        if(it->second == t_parenthesis_close || it->second == t_parenthesis_open)
+            lastParenthesis = it;
+        
         if(!isExpected(it->second)) {
-            if(it->second == t_end)
-                error(it, &tokens, "Unexpected end of expression.");
+            std::string err = "";
+            if(it->second == t_end) {
+                if(parenthesisLevel != 0) {
+                    err = "Unmatched parenthesis.";
+                    it = lastParenthesis; // For printing of position of error
+                }
+                else
+                    err = "Unexpected end of expression.";
+            }
             else if(it->second == t_unknown)
-                error(it, &tokens, "Unknown token.");
+                err = "Unknown token.";
             else if(it->second == t_error)
-                error(it, &tokens, "Simply error.");
-            else
-                error(it, &tokens, "Token not expected.");
+                err = "Simply error.";
+            else {
+                std::string exp = "";
+                Lexer lexer;
+                for(auto& i: expected) {
+                    exp += "" + lexer.getStringFromToken(i) + ", ";
+                }
+                err = "Token not expected.";
+                if(Options::has(Options::Option::PrintExpected))
+                    err += "\nExpected: " + exp;
+            }
+            error(it, &tokens, err);
             return false;
         }
         
@@ -193,7 +214,7 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
     return true;
 }
 
-std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack) {
+std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle /* = true */) {
     if(!checkValidity(tokens))
         return "";
     
@@ -201,7 +222,8 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
     if(Options::has(Options::Option::PrintTokensBeforeShuffle))
         lexer.printTokens(tokens);
     
-    tokens = shuffle(tokens);
+    if(doShuffle)
+        tokens = shuffle(tokens);
     
     if(Options::has(Options::Option::PrintTokensAfterShuffle))
         lexer.printTokens(tokens);

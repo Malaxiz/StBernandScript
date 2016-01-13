@@ -17,10 +17,11 @@ struct Options {
     enum Option {
         None                        = 0,
         PrintErrPosition            = 1 << 1,
-        PrintStackAfterExecution    = 1 << 2,
-        PrintStackDuringExecution   = 1 << 3,
-        PrintTokensBeforeShuffle    = 1 << 4,
-        PrintTokensAfterShuffle     = 1 << 5,
+        PrintExpected               = 1 << 2,
+        PrintStackAfterExecution    = 1 << 3,
+        PrintStackDuringExecution   = 1 << 4,
+        PrintTokensBeforeShuffle    = 1 << 5,
+        PrintTokensAfterShuffle     = 1 << 6,
         
     };
     

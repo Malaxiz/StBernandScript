@@ -10,5 +10,21 @@
 #define Function_hpp
 
 #include <stdio.h>
+#include <vector>
+#include <string>
+
+#include "Lexer.hpp"
+#include "Stack.hpp"
+
+
+class Function {
+    
+public:
+    void call(Stack* stack);
+    
+private:
+    std::vector<std::pair<std::string, Token>> tokens;
+    
+};
 
 #endif /* Function_hpp */

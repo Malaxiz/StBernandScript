@@ -27,7 +27,7 @@ class Parser {
 public:
     Parser();
     
-    std::string parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack);
+    std::string parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle = true);
     std::vector<std::pair<std::string, Token>> shuffle(std::vector<std::pair<std::string, Token>> tokens);
     bool checkValidity(std::vector<std::pair<std::string, Token>> tokens);
     
