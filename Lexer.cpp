@@ -194,7 +194,12 @@ Token Lexer::getKeyword(std::string input) {
 
 bool Lexer::isIdentifier(std::string input) {
     std::string allowed = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_";
-    return isAllowedString(allowed, input);
+    std::string allowedAfter = "1234567890";
+    
+    std::string first = "";
+    first.push_back(input.at(0));
+    
+    return isAllowedString(allowed, first) && isAllowedString(allowed + allowedAfter, input);
 }
 
 bool Lexer::isNumber(std::string input) {
