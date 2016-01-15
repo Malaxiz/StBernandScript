@@ -44,7 +44,10 @@ enum Token {
     
     t_k_if = 200,
     t_k_then,
-    t_k_end,
+    t_k_fend,
+    
+    t_true,
+    t_false,
     
     /* Macros */
     
@@ -119,9 +122,6 @@ private:
     std::string scan(std::string input);
     std::vector<std::pair<std::string, Token>> sort(std::map<std::string, Token> tokens);
     
-    bool isAllowedString(std::string allowed, std::string input);
-    bool isIdentifier(std::string input);
-    bool isNumber(std::string input);
     Token getKeyword(std::string input);
     Token getOperator(std::string op);
     

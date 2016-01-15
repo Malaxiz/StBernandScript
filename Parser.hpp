@@ -27,13 +27,14 @@ class Parser {
 public:
     Parser();
     
-    std::string parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle = true);
+    std::pair<std::string, int> parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle = true);
     std::vector<std::pair<std::string, Token>> shuffle(std::vector<std::pair<std::string, Token>> tokens);
     bool checkValidity(std::vector<std::pair<std::string, Token>> tokens);
     
 private:
     template<typename Iter, typename Vec>
-    void error(Iter it, Vec* vec, std::string msg, ErrorOption option = PrintHint) {
+    std::pair<std::string, int> error(Iter it, Vec* vec, std::string msg, ErrorOption option = PrintHint) {
+        std::string toReturn = "";
         if((option & PrintHint) && Options::has(Options::Option::PrintErrPosition)) {
             int position = 0;
             {
@@ -42,24 +43,81 @@ private:
                     if(i < it)
                         position += i->first.length() + 1;
                     
-                    std::cout << i->first << " ";
+                    toReturn += i->first + " ";
                     i++;
                 }
             }
-            std::cout << "\n";
+            toReturn += "\n";
             
             for(int i = 0; i < position; i++) {
-                std::cout << "-";
+                toReturn += "-";
             }
-            std::cout << "^";
+            toReturn += "^";
 //                std::cout << "(" << position << ")";
-            std::cout << "\n";
+            toReturn += "\n";
         }
         
-        std::cout << "[Error] \"" << it->first << "\" (" << it->second << "): " << msg;
+        toReturn += "[Error] \"" + it->first + "\" (" + std::to_string(it->second) + "): " + msg;
+        return std::make_pair(toReturn, -100);
     }
     
-    int doMathOperation(std::pair<std::string, Token> op, Stack* stack);
+    int doOperationLogic(std::pair<std::string, Token> op, Stack* stack);
+    template<typename T, typename T2>
+    std::pair<std::string, int> doOperation(std::pair<std::string, Token> op, T first, T2 second) {
+        std::string result = "";
+        switch(op.second) {
+            case t_plus:
+                result = second + first;
+                break;
+                
+            case t_minus:
+                result = second - first;
+                break;
+                
+            case t_forw_slash:
+                result = second / first;
+                break;
+                
+            case t_asterix:
+                result = second * first;
+                break;
+                
+            case t_raised:
+                result = pow(second, first);
+                break;
+                
+            case t_modulo:
+                result = (int)floor(second) % (int)floor(first);
+                break;
+                
+            case t_equal_to:
+                result = second == first;
+                break;
+                
+            case t_not_equal_to:
+                result = second != first;
+                break;
+                
+            case t_less_than:
+                result = second < first;
+                break;
+                
+            case t_greater_than:
+                result = second > first;
+                break;
+                
+            case t_less_than_or_equal:
+                result = second <= first;
+                break;
+                
+            case t_greater_than_or_equal:
+                result = second >= first;
+                break;
+                
+            default:
+                return std::make_pair("", -1);
+        }
+    }
     
     template<typename Vec, typename Val>
     bool isInVector(Vec vec, Val val) {
@@ -82,19 +140,6 @@ private:
         expected = mergeVectors(expected, tokens);
     }
     
-//    template<typename ... Tokens>
-//    void addExpected(Tokens ... tokens) {
-//        Token args[] {tokens ...};
-//        std::vector<Token> v(std::begin(args), std::end(args));
-//        expected = mergeVectors(expected, v);
-//    }
-//    
-//    template<typename ... Tokens>
-//    void setExpected(Tokens ... tokens) {
-//        expected.clear();
-//        addExpected(std::forward<Tokens>(tokens)...);
-//    }
-    
     bool isExpected(Token token) {
         return isInVector(expected, token);
     }
@@ -108,12 +153,9 @@ private:
         return ab;
     }
     
-    std::string removeTrailingZeros(std::string input);
-    std::string removeUntil(std::string input, char until);
-    
     int getPriorityLevel(Token token, std::map<int, std::vector<Token>> order);
     
-    std::string parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle = true);
+    std::pair<std::string, int> parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle = true);
     
 };
 

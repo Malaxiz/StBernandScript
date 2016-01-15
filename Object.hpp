@@ -15,6 +15,8 @@
 #include "Lexer.hpp"
 
 
+class Function;
+
 class Object {
     
 public:
@@ -36,6 +38,10 @@ public:
     }
     
     Token type;
+    
+    float getNumber();
+    std::string getString();
+    Function* getFunction();
     
     
 };

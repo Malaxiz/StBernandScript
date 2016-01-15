@@ -51,13 +51,6 @@ void Stack::clear() {
     stack.clear();
 }
 
-float Stack::getNumberFromObject(Object* obj) {
-    if(obj->type == t_type_number)
-        return *(float*)(obj->value);
-    else
-        return INT_MIN; // error
-}
-
 Object* Stack::getVariable(std::string identifier) {
     if(variables.find(identifier) == variables.end())
         return nullptr;

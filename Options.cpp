@@ -9,4 +9,4 @@
 #include "Options.hpp"
 
 
-Options::Option Options::_Options;
+Options::Option Options::_Options = Options::Option::None;

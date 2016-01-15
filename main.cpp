@@ -8,9 +8,7 @@
 
 #include <iostream>
 
-#include "Lexer.hpp"
-#include "Parser.hpp"
-#include "Stack.hpp"
+#include "StBernand.hpp"
 #include "Options.hpp"
 
 
@@ -19,30 +17,13 @@
 //    
 //    return 2;
 //}
-
-int main(int argc, const char * argv[]) {
-    
 //    void* thing = (void*)&test;
 //    ((int(*)())thing)();
-    
-    Lexer lexer;
-    Parser parser;
-    Stack stack;
-    
+
+int main(int argc, const char * argv[]) {
     Options::_Options = (Options::Option)((int)Options::Option::PrintErrPosition |
                                           (int)Options::Option::PrintExpected); // Default options
     
-    while(true) {
-        std::string input = "";
-        std::cout << "> ";
-        std::getline(std::cin, input);
-        if(input == "exit")
-            break;
-        
-        auto result = lexer.lex(input, Lexer::Options::Lex);
-        std::cout << parser.parse(result, &stack) << "\n";
-        stack.clear();
-    }
-    
-    return 0;
+    StBernand sb;
+    return sb.start();
 }

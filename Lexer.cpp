@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include "Lexer.hpp"
+#include "Helper.hpp"
 
 
 Lexer::Lexer() {
@@ -18,7 +19,8 @@ Lexer::Lexer() {
         {"function",    t_keyword_function},
         {"if",          t_k_if},
         {"then",        t_k_then},
-        {"end",         t_k_end},
+        {"endf",        t_k_fend},
+        
 //        {"null",        t_null},
     };
     
@@ -44,6 +46,7 @@ Lexer::Lexer() {
         
         {"(",       t_parenthesis_open},
         {")",       t_parenthesis_close},
+        {"\"",      t_quote},
         
         {"++",      t_increment},
         {"--",      t_decrement},
@@ -95,11 +98,11 @@ std::vector<std::pair<std::string, Token>> Lexer::lex(std::string input, Options
             toReturn.push_back({i, keyword});
             continue;
         }
-        if(isIdentifier(i)) {
+        if(Helper::isIdentifier(i)) {
             toReturn.push_back({i, t_identifier});
             continue;
         }
-        if(isNumber(i)) {
+        if(Helper::isNumber(i)) {
             toReturn.push_back({i, t_number});
             continue;
         }
@@ -171,40 +174,12 @@ std::vector<std::pair<std::string, Token>> Lexer::sort(std::map<std::string, Tok
     return toReturn;
 }
 
-bool Lexer::isAllowedString(std::string allowed, std::string input) {
-    if((int)input.length() <= 0)
-        return false;
-    if((int)allowed.length() <= 0)
-        return false;
-    
-    for(auto& c: input)
-        if(allowed.find(c) == std::string::npos)
-            return false;
-    
-    return true;
-}
-
 Token Lexer::getKeyword(std::string input) {
     for(auto& i: keywords)
         if(i.first == input)
             return i.second;
     
     return t_unknown;
-}
-
-bool Lexer::isIdentifier(std::string input) {
-    std::string allowed = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_";
-    std::string allowedAfter = "1234567890";
-    
-    std::string first = "";
-    first.push_back(input.at(0));
-    
-    return isAllowedString(allowed, first) && isAllowedString(allowed + allowedAfter, input);
-}
-
-bool Lexer::isNumber(std::string input) {
-    std::string allowed = "1234567890";
-    return isAllowedString(allowed, input);
 }
 
 Token Lexer::getOperator(std::string op) {

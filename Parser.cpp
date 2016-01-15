@@ -12,6 +12,8 @@
 
 #include "Parser.hpp"
 #include "Options.hpp"
+#include "Helper.hpp"
+
 
 Parser::Parser() {
     
@@ -84,11 +86,19 @@ std::vector<std::pair<std::string, Token>> Parser::shuffle(std::vector<std::pair
             {
                 if(next == t_parenthesis_open) {
                     auto endParenthesis = getClosingToken(&it, &tokens, t_parenthesis_close);
+                    std::cout << endParenthesis->first << "\n";
                     auto temp = *it;
                     tokens.erase(it, it + 1);
                     tokens.insert(endParenthesis - 2, temp);
                     break;
                     
+                }
+                if(next == t_quote) {
+                    auto endQuote = getClosingToken(&it, &tokens, t_quote);
+                    auto temp = *it;
+                    tokens.erase(it, it + 1);
+                    tokens.insert(endQuote - 2, temp);
+                    break;
                 }
             }
                 
@@ -117,6 +127,12 @@ std::vector<std::pair<std::string, Token>> Parser::shuffle(std::vector<std::pair
             
             case t_equals:
                 std::rotate(it, it + 1, tokens.end() - 1);
+                if(it != (tokens.end() - 2)) // when the bugs come look here
+                    it--;
+                break;
+                
+            case t_quote:
+                it = getClosingToken(&it, &tokens);
                 break;
                 
             default:
@@ -168,28 +184,35 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
                 if(Options::has(Options::Option::PrintExpected))
                     err += "\nExpected: " + exp;
             }
-            error(it, &tokens, err);
+            std::cout << error(it, &tokens, err).first;
             return false;
         }
         
         setExpected({});
         
         switch(it->second) {
-                
             case t_start:
-                addExpected({t_number, t_identifier, t_parenthesis_open, t_end});
+                addExpected({t_number, t_identifier, t_parenthesis_open, t_quote, t_end});
                 break;
             case t_end:
-                if(parenthesisLevel != 0) {
+                if(parenthesisLevel > 0) {
                     while(it != tokens.begin()) {
                         if(it->second == t_parenthesis_open)
                             if(getClosingToken(&it, &tokens, t_parenthesis_close) == tokens.end())
                                 break;
                         it--;
                     }
-                    error(it, &tokens, "Unmatched parenthesis.");
+                    std::cout << error(it, &tokens, "Unmatched [(].").first;
+                    return false;
+                } else if(parenthesisLevel < 0) {
+                    it = lastParenthesis;
+                    std::cout << error(it, &tokens, "Extraneous [)].").first;
                     return false;
                 }
+                break;
+                
+            case t_semicolon:
+                addExpected({t_number, t_identifier, t_parenthesis_open, t_end, t_semicolon});
                 break;
                 
             case t_number:
@@ -207,7 +230,7 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
                 break;
                 
             case t_equals:
-                addExpected({t_number, t_identifier});
+                addExpected({t_number, t_identifier, t_quote});
                 break;
                 
             case t_parenthesis_open:
@@ -219,6 +242,19 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
                 parenthesisLevel -= 1;
                 addExpected(getOperatorTokens());
                 addExpected({t_parenthesis_close, t_end});
+                break;
+                
+            case t_quote:
+            {
+                auto closing = getClosingToken(&it, &tokens);
+                if(closing == tokens.end()) {
+                    it = tokens.end(); // Create the unexpected end of expression error
+                } else {
+                    it = closing;
+                    addExpected(getOperatorTokens());
+                    addExpected({t_end});
+                }
+            }
                 break;
                 
             case t_increment:
@@ -239,11 +275,11 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
             case t_less_than:
             case t_less_than_or_equal:
             case t_greater_than_or_equal:
-                addExpected({t_number, t_identifier, t_parenthesis_open});
+                addExpected({t_number, t_identifier, t_parenthesis_open, t_quote});
                 break;
             
             default:
-                error(it, &tokens, "Token not handled. (validity)");
+                std::cout << error(it, &tokens, "Token not handled. (validity)").first;
                 return false;
                 break;
                 
@@ -255,9 +291,9 @@ bool Parser::checkValidity(std::vector<std::pair<std::string, Token>> tokens) {
     return true;
 }
 
-std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle /* = true */) {
+std::pair<std::string, int> Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Stack* stack, bool doShuffle /* = true */) {
     if(!checkValidity(tokens))
-        return "";
+        return std::make_pair("", -100);
     
     Lexer lexer;
     if(Options::has(Options::Option::PrintTokensBeforeShuffle))
@@ -283,10 +319,8 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
                 Object* toAssign = stack->getObject(-1);
                 Object* value = stack->getObject(0);
                 
-                if(!toAssign || !value) {
-                    error(it, &tokens, "Unable to assign value to element.");
-                    return "";
-                }
+                if(!toAssign || !value)
+                    return error(it, &tokens, "Unable to assign value to element.", PrintNone);
                 
                 toAssign->type = value->type;
                 toAssign->value = value->value;
@@ -329,8 +363,23 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
                 break;
                 
             case t_parenthesis_open:
-                break;
             case t_parenthesis_close:
+                break;
+                
+            case t_quote:
+            {
+                std::string stringToAdd = "";
+                auto start = it + 1;
+                auto end = getClosingToken(&it, &tokens);
+                it = end;
+                while(start != end) {
+                    stringToAdd += start->first;
+                    start++;
+                }
+                void* str = (void*)stack->addString(stringToAdd);
+                Object* obj = stack->addObject(new Object(str, t_type_string));
+                stack->push(obj);
+            }
                 break;
                 
             case t_plus:
@@ -346,26 +395,24 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
             case t_less_than_or_equal:
             case t_greater_than_or_equal:
             {
-                auto result = doMathOperation(*it, stack);
+                auto result = doOperationLogic(*it, stack);
                 switch(result) {
                     case -1:
-                        error(it, &tokens, "This should not happen.", PrintNone);
-                        break;
                     case -2:
-                        error(it, &tokens, "Stack doesn't contain atleast 2 objects.", PrintNone);
+                        return error(it, &tokens, "Stack doesn't contain atleast 2 objects.", PrintNone);
                         break;
                     case -3:
-                        error(it, &tokens, "Cannot do math on null.", PrintNone);
+                        return error(it, &tokens, "Cannot do math on null.", PrintNone);
                         break;
                     case -4:
-                        error(it, &tokens, "This is not a registred mathematical operator.");
+                        return error(it, &tokens, "This is not a registred mathematical operator.");
+                        break;
+                    case -5:
+                        return error(it, &tokens, "Cannot do math on these types.");
                         break;
                     default:
                         break;
                 }
-                
-                if(result < 0)
-                    return "";
             }
                 break;
                 
@@ -377,8 +424,7 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
                 break;
                 
             default:
-                error(it, &tokens, "Token not handled. (exec)");
-                return "";
+                return error(it, &tokens, "Token not handled. (exec)");
         }
         
         if(Options::has(Options::Option::PrintStackDuringExecution))
@@ -393,35 +439,27 @@ std::string Parser::parse(std::vector<std::pair<std::string, Token>> tokens, Sta
     std::string toReturn = "";
     if(stack->size() > 0) {
         auto obj = stack->getObject(0);
-        if(obj->type == t_null)
-            toReturn = "[t_null]";
-        else if(obj->type == t_type_string) {
-            
-        } else {
-            toReturn = std::to_string(stack->getNumberFromObject(obj));
-            if(obj->type == t_type_number) {
-                toReturn = removeTrailingZeros(toReturn);
-            } else if(obj->type == t_type_bool) {
-                toReturn = stack->getNumberFromObject(obj) > 0 ? "true" : "false";
-            }
-        }
+        toReturn = obj->getString();
+        if(obj->type == t_type_string)
+            toReturn = "\"" + toReturn + "\"";
     }
     
-    return toReturn;
+    return std::make_pair(toReturn, 0);
 }
 
-std::string Parser::parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle /* = true */ ) {
+std::pair<std::string, int> Parser::parse(std::vector<std::pair<std::string, Token>>* tokens, Stack* stack, std::vector<std::pair<std::string, Token>>::iterator* start, std::vector<std::pair<std::string, Token>>::iterator* stop, bool doShuffle /* = true */ ) {
+    
+    std::cout << "here\n";
     
     auto copy = *tokens;
     
     copy.erase(*stop, copy.end());
     copy.erase(copy.begin(), *start);
     
-    parse(copy, stack);
-    return "";
+    return parse(copy, stack);
 }
 
-int Parser::doMathOperation(std::pair<std::string, Token> op, Stack* stack) {
+int Parser::doOperationLogic(std::pair<std::string, Token> op, Stack* stack) {
     if(stack->size() < 2)
         return -1;
     
@@ -448,79 +486,130 @@ int Parser::doMathOperation(std::pair<std::string, Token> op, Stack* stack) {
     
     Token type = t_unknown;
     
-    float num1 = stack->getNumberFromObject(obj1);
-    float num2 = stack->getNumberFromObject(obj2);
-    float result = 0;
+    std::string result = std::to_string(INT_MIN);
     
-    switch(op.second) {
-        case t_plus:
-            type = t_type_number;
-            result = num2 + num1;
-            break;
-            
-        case t_minus:
-            type = t_type_number;
-            result = num2 - num1;
-            break;
-            
-        case t_forw_slash:
-            type = t_type_number;
-            result = num2 / num1;
-            break;
-            
-        case t_asterix:
-            type = t_type_number;
-            result = num2 * num1;
-            break;
-            
-        case t_raised:
-            type = t_type_number;
-            result = pow(num2, num1);
-            break;
-            
-        case t_modulo:
-            type = t_type_number;
-            result = (int)floor(num2) % (int)floor(num1);
-            break;
-            
-        case t_equal_to:
+    if(obj1->type == t_type_string || obj2->type == t_type_string) {
+        type = t_type_string;
+        
+        auto first = obj1->getString();
+        auto second = obj2->getString();
+        
+        switch(op.second) {
+            case t_plus:
+                result = second + first;
+                break;
+                
+            case t_equal_to:
+                result = std::to_string(second == first);
+                break;
+                
+            case t_not_equal_to:
+                result = std::to_string(second != first);
+                break;
+                
+            case t_less_than:
+                result = std::to_string(second < first);
+                break;
+                
+            case t_greater_than:
+                result = std::to_string(second > first);
+                break;
+                
+            case t_less_than_or_equal:
+                result = std::to_string(second <= first);
+                break;
+                
+            case t_greater_than_or_equal:
+                result = std::to_string(second >= first);
+                break;
+                
+            default:
+                return -4;
+        }
+        
+    } else if((obj1->type == t_type_number || obj1->type == t_type_bool) && (obj2->type == t_type_number || obj2->type == t_type_bool)) {
+        type = t_type_number;
+        if(obj1->type == t_type_bool || obj2->type == t_type_bool)
             type = t_type_bool;
-            result = num2 == num1;
+        
+        auto first = obj1->getNumber();
+        auto second = obj2->getNumber();
+        
+        switch(op.second) {
+            case t_plus:
+                result = std::to_string(second + first);
+                break;
+                
+            case t_minus:
+                result = std::to_string(second - first);
+                break;
+                
+            case t_forw_slash:
+                result = std::to_string(second / first);
+                break;
+                
+            case t_asterix:
+                result = std::to_string(second * first);
+                break;
+                
+            case t_raised:
+                result = std::to_string(pow(second, first));
+                break;
+                
+            case t_modulo:
+                result = std::to_string((int)floor(second) % (int)floor(first));
+                break;
+                
+            case t_equal_to:
+                result = std::to_string(second == first);
+                break;
+                
+            case t_not_equal_to:
+                result = std::to_string(second != first);
+                break;
+                
+            case t_less_than:
+                result = std::to_string(second < first);
+                break;
+                
+            case t_greater_than:
+                result = std::to_string(second > first);
+                break;
+                
+            case t_less_than_or_equal:
+                result = std::to_string(second <= first);
+                break;
+                
+            case t_greater_than_or_equal:
+                result = std::to_string(second >= first);
+                break;
+                
+            default:
+                return -4;
+        }
+    } else
+        return -5;
+    
+    std::vector<Token> boolean = {t_equal_to, t_less_than, t_less_than_or_equal, t_greater_than, t_greater_than_or_equal, t_not_equal_to};
+    if(isInVector(boolean, op.second))
+        type = t_type_bool;
+    
+    void* toPush = nullptr;
+    switch(type) {
+        case t_type_string:
+            toPush = (void*)stack->addString(result);
             break;
             
-        case t_not_equal_to:
-            type = t_type_bool;
-            result = num2 != num1;
-            break;
-            
-        case t_less_than:
-            type = t_type_bool;
-            result = num2 < num1;
-            break;
-            
-        case t_greater_than:
-            type = t_type_bool;
-            result = num2 > num1;
-            break;
-            
-        case t_less_than_or_equal:
-            type = t_type_bool;
-            result = num2 <= num1;
-            break;
-            
-        case t_greater_than_or_equal:
-            type = t_type_bool;
-            result = num2 >= num1;
+        case t_type_number:
+        case t_type_bool:
+            toPush = (void*)stack->addFloat(std::stof(result));
             break;
             
         default:
-            return -4;
+            return -5;
+            break;
     }
-    
-    void* number;
-    number = (void*)stack->addFloat(result);
-    
-    stack->push(stack->addObject(new Object(number, type)));
+    stack->push(stack->addObject(new Object(toPush, type)));
     
     return 0; // Success
 }
@@ -529,15 +618,19 @@ std::vector<Token> Parser::getOperatorTokens() {
     return {t_plus, t_minus, t_asterix, t_forw_slash, t_raised, t_modulo, t_equal_to, t_less_than, t_greater_than, t_less_than_or_equal, t_greater_than_or_equal, t_not_equal_to};
 }
 
+// Remember if you don't send closing token the token will be the same as opening token, aswell as the iterator jumps over on step
 std::vector<std::pair<std::string, Token>>::iterator Parser::getClosingToken(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec, Token close /* = t_null */) {
     
     Token open = (*position)->second;
-    if(close == t_null)
-        close = open;
     
     int level = 1;
     
     auto it = *position;
+    if(close == t_null) { // This means closing sign is same as opening sign, jump one step forward
+        close = open;
+        it++;
+    }
+    
     while(it != vec->end()) {
         if(it->second == close)
             level--;
@@ -551,32 +644,6 @@ std::vector<std::pair<std::string, Token>>::iterator Parser::getClosingToken(std
     }
     
     return vec->end();
-}
-
-std::string Parser::removeTrailingZeros(std::string input) {
-    int index = 0;
-    
-    auto it = input.end() - 1;
-    while(it != input.begin()) {
-        if(*it != '0' && *it != '.')
-            break;
-        index++;
-        if(*it == '.')
-            break;
-        it--;
-    }
-    
-    return input.substr(0, input.size() - index);
-}
-
-std::string Parser::removeUntil(std::string input, char until) {
-    std::string toReturn = "";
-    for(auto& i: input) {
-        if(i == until)
-            break;
-        toReturn += i;
-    }
-    return toReturn;
 }
 
 int Parser::getPriorityLevel(Token token, std::map<int, std::vector<Token>> order) {

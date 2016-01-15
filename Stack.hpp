@@ -37,8 +37,6 @@ public:
     void printStack();
     void clear();
     
-    float getNumberFromObject(Object* obj);
-    
     Object* getVariable(std::string identifier);
     void addVariable(std::string identifier, Object* object);
     
