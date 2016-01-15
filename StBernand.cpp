@@ -12,8 +12,9 @@
 
 
 int StBernand::start() {
-    stack.addVariable("true", stack.addObject(new Object(stack.addFloat(1), t_type_bool)));
-    stack.addVariable("false", stack.addObject(new Object(stack.addFloat(0), t_type_bool)));
+    stack.addVariable("true", stack.addObject(new Object(stack.addFloat(1), t_type_bool, true)));
+    stack.addVariable("false", stack.addObject(new Object(stack.addFloat(0), t_type_bool, true)));
+    stack.addVariable("null", stack.addObject(new Object(nullptr, t_null, true)));
     
     while(true) {
         std::string input = "";

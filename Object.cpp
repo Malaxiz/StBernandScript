@@ -14,9 +14,10 @@
 #include "Helper.hpp"
 
 
-Object::Object(void* value, Token type)
+Object::Object(void* value, Token type, bool isConst)
     : value(value)
     , type(type)
+    , isConst(isConst)
 {
 }
 

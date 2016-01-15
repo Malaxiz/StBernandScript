@@ -124,8 +124,6 @@ private:
         return std::find(vec.begin(), vec.end(), val) != vec.end();
     }
     
-    std::vector<std::pair<std::string, Token>>::iterator getClosingToken(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec, Token find = t_null);
-    
     std::vector<Token> expected;
     std::vector<Token> getOperatorTokens();
     

@@ -62,3 +62,31 @@ bool Helper::isAllowedString(std::string allowed, std::string input) {
     
     return true;
 }
+
+// Remember if you don't send closing token the token will be the same as opening token, aswell as the iterator jumps over on step
+std::vector<std::pair<std::string, Token>>::iterator Helper::getClosingToken(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec, Token close /* = t_null */) {
+    
+    Token open = (*position)->second;
+    
+    int level = 1;
+    
+    auto it = *position;
+    if(close == t_null) { // This means closing sign is same as opening sign, jump one step forward
+        close = open;
+        it++;
+    }
+    
+    while(it != vec->end()) {
+        if(it->second == close)
+            level--;
+        else if(it->second == open)
+            level++;
+        
+        if(level == 0)
+            return it;
+        
+        ++it;
+    }
+    
+    return vec->end();
+}

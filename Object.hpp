@@ -20,7 +20,7 @@ class Function;
 class Object {
     
 public:
-    Object(void* value, Token type);
+    Object(void* value, Token type, bool isConst = false);
     ~Object();
     
     void* value;
@@ -38,6 +38,7 @@ public:
     }
     
     Token type;
+    bool isConst;
     
     float getNumber();
     std::string getString();

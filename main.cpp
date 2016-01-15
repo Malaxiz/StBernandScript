@@ -22,7 +22,8 @@
 
 int main(int argc, const char * argv[]) {
     Options::_Options = (Options::Option)((int)Options::Option::PrintErrPosition |
-                                          (int)Options::Option::PrintExpected); // Default options
+                                          (int)Options::Option::PrintExpected /* |
+                                          (int)Options::Option::PrintTokensAfterShuffle */); // Default options
     
     StBernand sb;
     return sb.start();

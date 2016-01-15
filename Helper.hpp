@@ -11,6 +11,9 @@
 
 #include <stdio.h>
 #include <string>
+#include <vector>
+
+#include "Lexer.hpp"
 
 
 namespace Helper {
@@ -21,6 +24,8 @@ namespace Helper {
     bool isAllowedString(std::string allowed, std::string input);
     bool isIdentifier(std::string input);
     bool isNumber(std::string input);
+    
+    std::vector<std::pair<std::string, Token>>::iterator getClosingToken(std::vector<std::pair<std::string, Token>>::iterator* position, std::vector<std::pair<std::string, Token>>* vec, Token find = t_null);
     
 }
 
